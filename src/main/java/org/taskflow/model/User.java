@@ -12,16 +12,21 @@ public class User {
     private String email;
     private String password;
     private LocalDateTime createdAt;
+    private String role;
     private boolean notifyOnDue;
 
 
-    public User(ObjectId id, String displayName, String email, String password, LocalDateTime createdAt, boolean notifyOnDue) {
+    public User(ObjectId id, String displayName, String email, String password,String role, LocalDateTime createdAt, boolean notifyOnDue) {
         this.id = id;
         this.displayName = displayName;
         this.email = email;
         this.password = password;
+        this.role = role;
         this.createdAt = createdAt;
         this.notifyOnDue = notifyOnDue;
+    }
+
+    public User() {
     }
 
     public ObjectId getId() {
@@ -54,6 +59,14 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public LocalDateTime getCreatedAt() {
