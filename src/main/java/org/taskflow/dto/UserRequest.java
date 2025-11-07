@@ -1,13 +1,18 @@
 package org.taskflow.dto;
 
-public class RegisterRequest {
+public class UserRequest {
     private String email;
     private String displayName;
     private String password;
     private boolean notifyOnDue;
-    public RegisterRequest() {
+    public UserRequest() {
     }
-    public RegisterRequest(String email, String displayName, String password, boolean notifyOnDue) {
+    // Change Settings Constructor
+    public UserRequest(boolean notifyOnDue ) {
+        this.notifyOnDue = notifyOnDue;
+    }
+
+    public UserRequest(String email, String displayName, String password, boolean notifyOnDue) {
         this.email = email;
         this.displayName = displayName;
         this.password = password;

@@ -1,12 +1,14 @@
 package org.taskflow.service;
 
-import io.quarkus.security.UnauthorizedException;
+import org.taskflow.exception.UnauthorizedException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.taskflow.exception.BadRequestException;
+import org.bson.types.ObjectId;
 import org.mindrot.jbcrypt.BCrypt;
 import org.taskflow.dto.LoginRequest;
 import org.taskflow.dto.LoginResponse;
-import org.taskflow.dto.RegisterRequest;
+import org.taskflow.dto.UserRequest;
 import org.taskflow.dto.UserResponse;
 import org.taskflow.model.User;
 import org.taskflow.repository.UserRepository;
@@ -19,15 +21,19 @@ public class UserService {
     @Inject
     UserRepository userRepository;
 
-    public LoginResponse createUser(RegisterRequest userRequest) {
+    public LoginResponse createUser(UserRequest userRequest) {
         if (userRequest.getDisplayName() == null || userRequest.getDisplayName().isEmpty()) {
-            throw new IllegalArgumentException("Display name is required");
+            throw new BadRequestException("Display name is required");
         }
         if (userRequest.getEmail() == null || userRequest.getEmail().isEmpty()) {
-            throw new IllegalArgumentException("Email is required");
+            throw new BadRequestException("Email is required");
         }
         if (userRequest.getPassword() == null || userRequest.getPassword().isEmpty()) {
-            throw new IllegalArgumentException("Password is required");
+            throw new BadRequestException("Password is required");
+        }
+
+        if(userRepository.findByEmail(userRequest.getEmail()) != null) {
+            throw new BadRequestException("Email already in use");
         }
 
         User newUser = new User();
@@ -41,6 +47,7 @@ public class UserService {
         userRepository.registerUser(newUser);
 
         UserResponse userResponse = new UserResponse(
+                newUser.getId().toString(),
                 userRequest.getEmail(),
                 userRequest.getDisplayName(),
                 "USER",
@@ -56,10 +63,10 @@ public class UserService {
 
     public LoginResponse login(LoginRequest userRequest) {
         if (userRequest.getEmail() == null || userRequest.getEmail().isEmpty()) {
-            throw new IllegalArgumentException("Email is required");
+            return new LoginResponse("Email is required");
         }
         if (userRequest.getPassword() == null || userRequest.getPassword().isEmpty()) {
-            throw new IllegalArgumentException("Password is required");
+            return new LoginResponse("Password is required");
         }
 
         User existingUser = userRepository.findByEmail(userRequest.getEmail());
@@ -73,6 +80,7 @@ public class UserService {
         }
 
         UserResponse userResponse = new UserResponse(
+                existingUser.getId().toString(),
                 existingUser.getEmail(),
                 existingUser.getDisplayName(),
                 existingUser.getRole(),
@@ -85,6 +93,16 @@ public class UserService {
         return new LoginResponse("Login successful", accessToken, refreshToken, userResponse);
     }
 
+    public void updateNotifySetting(ObjectId id, boolean notifyOnDue) {
+        User user = userRepository.findById(id);
+        if (user != null) {
+            user.setNotifyOnDue(notifyOnDue);
+            userRepository.UpdateNotifySetting(user);
+        } else {
+            throw new BadRequestException("User not found");
+        }
+    }
+
     public String hashPassword(String plainPassword) {
         return BCrypt.hashpw(plainPassword, BCrypt.gensalt());
     }
@@ -93,4 +111,3 @@ public class UserService {
         return BCrypt.checkpw(plainPassword, hashedPassword);
     }
 }
-

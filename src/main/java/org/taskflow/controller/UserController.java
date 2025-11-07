@@ -1,11 +1,14 @@
 package org.taskflow.controller;
 
+import io.quarkus.security.Authenticated;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import org.taskflow.dto.LoginRequest;
-import org.taskflow.dto.LoginResponse;
-import org.taskflow.dto.RegisterRequest;
+import jakarta.ws.rs.core.Response;
+import org.bson.types.ObjectId;
+import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.taskflow.dto.UserRequest;
 import org.taskflow.service.UserService;
 
 @Path("/api/user")
@@ -16,14 +19,23 @@ public class UserController {
     @Inject
     UserService userService;
 
-    @POST
-    public LoginResponse register(RegisterRequest userRequest) {
-        return userService.createUser(userRequest);
+    @Inject
+    Instance<JsonWebToken> jwtInstance;
+
+
+
+    public ObjectId getCurrentUserId() {
+        JsonWebToken jwt = jwtInstance.get();
+        return new ObjectId(jwt.getSubject());
     }
 
-    @GET
-    public LoginResponse login(LoginRequest userRequest) {
-        return userService.login(userRequest);
+    @Path("/settings")
+    @PUT
+    @Authenticated
+    public Response updateUserSettings(UserRequest userRequest) {
+        userService.updateNotifySetting(getCurrentUserId(), userRequest.isNotifyOnDue());
+        return Response.ok().entity("User settings updated successfully").build();
     }
+    
 }
 

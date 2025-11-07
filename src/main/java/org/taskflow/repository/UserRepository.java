@@ -19,5 +19,11 @@ public class UserRepository implements PanacheMongoRepository<User> {
     public User findByEmail(String email) {
         return find("email", email).firstResult();
     }
+
+    public void UpdateNotifySetting( User userUpdated) {
+        if (userUpdated != null) {
+            update(userUpdated);
+        }
+    }
 }
 

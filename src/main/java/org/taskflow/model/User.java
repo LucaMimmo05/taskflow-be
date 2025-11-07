@@ -2,17 +2,34 @@ package org.taskflow.model;
 
 
 import io.quarkus.mongodb.panache.common.MongoEntity;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.bson.types.ObjectId;
 import java.time.LocalDateTime;
 
 @MongoEntity(collection = "users")
 public class User {
     private ObjectId id;
+    @NotBlank(message = "Display name cannot be empty")
+    @Size(min = 3, max = 30, message = "Display name must be between 3 and 30 characters")
     private String displayName;
+
+    @NotBlank(message = "Email cannot be empty")
+    @Email(message = "Invalid email format")
     private String email;
+
+    @NotBlank(message = "Password cannot be empty")
+    @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
+
+    @NotNull(message = "Creation date cannot be null")
     private LocalDateTime createdAt;
+
+    @NotBlank(message = "Role cannot be empty")
     private String role;
+
     private boolean notifyOnDue;
 
 
