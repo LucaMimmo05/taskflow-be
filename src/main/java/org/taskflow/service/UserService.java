@@ -1,15 +1,13 @@
 package org.taskflow.service;
 
+import org.taskflow.dto.*;
+import org.taskflow.exception.NotFoundException;
 import org.taskflow.exception.UnauthorizedException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.taskflow.exception.BadRequestException;
 import org.bson.types.ObjectId;
 import org.mindrot.jbcrypt.BCrypt;
-import org.taskflow.dto.LoginRequest;
-import org.taskflow.dto.LoginResponse;
-import org.taskflow.dto.UserRequest;
-import org.taskflow.dto.UserResponse;
 import org.taskflow.model.User;
 import org.taskflow.repository.UserRepository;
 
@@ -41,7 +39,6 @@ public class UserService {
         newUser.setEmail(userRequest.getEmail());
         newUser.setPassword(hashPassword(userRequest.getPassword()));
         newUser.setRole("USER");
-        newUser.setNotifyOnDue(userRequest.isNotifyOnDue());
         newUser.setCreatedAt(LocalDateTime.now());
 
         userRepository.registerUser(newUser);
@@ -49,10 +46,7 @@ public class UserService {
         UserResponse userResponse = new UserResponse(
                 newUser.getId().toString(),
                 userRequest.getEmail(),
-                userRequest.getDisplayName(),
-                "USER",
-                userRequest.isNotifyOnDue()
-        );
+                userRequest.getDisplayName());
 
         String accessToken = JwtService.generateAccessToken(userResponse);
         String refreshToken = JwtService.generateRefreshToken(userResponse);
@@ -93,14 +87,36 @@ public class UserService {
         return new LoginResponse("Login successful", accessToken, refreshToken, userResponse);
     }
 
-    public void updateNotifySetting(ObjectId id, boolean notifyOnDue) {
+    public MessageResponse updateNotifySetting(ObjectId id, boolean notifyOnDue) {
         User user = userRepository.findById(id);
-        if (user != null) {
-            user.setNotifyOnDue(notifyOnDue);
-            userRepository.UpdateNotifySetting(user);
-        } else {
+        if (user == null) {
             throw new BadRequestException("User not found");
         }
+        user.setNotifyOnDue(notifyOnDue);
+        userRepository.updateNotifySetting(user);
+        return new MessageResponse("Notification setting updated successfully");
+    }
+
+    public UserResponse updateUser(ObjectId id,UserRequest userRequest) {
+        User user = userRepository.findById(id);
+        if (user == null) {
+            throw new NotFoundException("User not found");
+        }
+
+        if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
+            String hashedPassword = hashPassword(userRequest.getPassword());
+            userRequest.setPassword(hashedPassword);
+        }
+
+        User updateUser = userRepository.update(user,userRequest);
+
+        return new UserResponse(
+                updateUser.getId().toString(),
+                updateUser.getEmail(),
+                updateUser.getDisplayName()
+        );
+
+
     }
 
     public String hashPassword(String plainPassword) {

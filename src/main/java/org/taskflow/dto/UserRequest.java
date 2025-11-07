@@ -4,19 +4,13 @@ public class UserRequest {
     private String email;
     private String displayName;
     private String password;
-    private boolean notifyOnDue;
     public UserRequest() {
     }
-    // Change Settings Constructor
-    public UserRequest(boolean notifyOnDue ) {
-        this.notifyOnDue = notifyOnDue;
-    }
 
-    public UserRequest(String email, String displayName, String password, boolean notifyOnDue) {
+    public UserRequest(String email, String displayName, String password) {
         this.email = email;
         this.displayName = displayName;
         this.password = password;
-        this.notifyOnDue = notifyOnDue;
     }
     public String getEmail() {
         return email;
@@ -41,11 +35,4 @@ public class UserRequest {
         this.password = password;
     }
 
-    public boolean isNotifyOnDue() {
-        return notifyOnDue;
-    }
-
-    public void setNotifyOnDue(boolean notifyOnDue) {
-        this.notifyOnDue = notifyOnDue;
-    }
 }

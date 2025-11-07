@@ -5,15 +5,18 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.bson.types.ObjectId;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.taskflow.dto.MessageResponse;
+import org.taskflow.dto.SettingRequest;
 import org.taskflow.dto.UserRequest;
+import org.taskflow.dto.UserResponse;
 import org.taskflow.service.UserService;
 
 @Path("/api/user")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@Authenticated
 public class UserController {
 
     @Inject
@@ -29,12 +32,15 @@ public class UserController {
         return new ObjectId(jwt.getSubject());
     }
 
+    @PUT
+    public UserResponse updateUser(UserRequest userRequest) {
+        return userService.updateUser(getCurrentUserId(), userRequest);
+    }
+
     @Path("/settings")
     @PUT
-    @Authenticated
-    public Response updateUserSettings(UserRequest userRequest) {
-        userService.updateNotifySetting(getCurrentUserId(), userRequest.isNotifyOnDue());
-        return Response.ok().entity("User settings updated successfully").build();
+    public MessageResponse updateUserSettings(SettingRequest userRequest) {
+        return userService.updateNotifySetting(getCurrentUserId(), userRequest.isNotifyOnDue());
     }
     
 }
