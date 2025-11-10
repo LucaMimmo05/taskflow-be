@@ -42,6 +42,13 @@ public class UserController {
     public MessageResponse updateUserSettings(SettingRequest userRequest) {
         return userService.updateNotifySetting(getCurrentUserId(), userRequest.isNotifyOnDue());
     }
+
+    @DELETE
+    public MessageResponse deleteUser() {
+        ObjectId userId = getCurrentUserId();
+        userService.deleteUser(userId);
+        return new MessageResponse("User has been deleted");
+    }
     
 }
 

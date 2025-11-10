@@ -115,8 +115,14 @@ public class UserService {
                 updateUser.getEmail(),
                 updateUser.getDisplayName()
         );
+    }
 
-
+    public void deleteUser(ObjectId id) {
+        User user = userRepository.findById(id);
+        if (user == null) {
+            throw new NotFoundException("User not found");
+        }
+        userRepository.deleteById(id);
     }
 
     public String hashPassword(String plainPassword) {
