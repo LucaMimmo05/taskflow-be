@@ -2,6 +2,7 @@ package org.taskflow.model;
 
 import io.quarkus.mongodb.panache.common.MongoEntity;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.bson.types.ObjectId;
@@ -20,6 +21,7 @@ public class Project {
     @NotNull(message = "CreatorId is required")
     private ObjectId creatorId;
 
+    @NotEmpty(message = "At least one collaborator is required")
     private List<Collaborator> collaborators;
 
     @NotNull(message = "Phases list cannot be null")

@@ -6,11 +6,15 @@ import org.bson.types.ObjectId;
 import org.taskflow.dto.CollaboratorResponse;
 import org.taskflow.dto.ProjectRequest;
 import org.taskflow.dto.ProjectResponse;
+import org.taskflow.exception.NotFoundException;
+import org.taskflow.model.Collaborator;
 import org.taskflow.model.Project;
 import org.taskflow.model.User;
 import org.taskflow.repository.ProjectRepository;
 import org.taskflow.repository.UserRepository;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,19 +35,44 @@ public class ProjectService {
         return toResponse(project);
     }
 
-    public ProjectResponse create(ProjectRequest project, ObjectId creatorId) {
+    public List<ProjectResponse> getByUserId(ObjectId userId) {
+        List<Project> projects = projectRepository.getProjectsByUserId(userId);
+        return projects.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    public ProjectResponse create(ProjectRequest projectRequest, ObjectId creatorId) {
         Project newProject = new Project();
-        newProject.setTitle(project.getTitle());
+        newProject.setTitle(projectRequest.getTitle());
         newProject.setCreatorId(creatorId);
-        newProject.setCollaborators(project.getCollaborators());
-        newProject.setPhases(project.getPhases());
-        newProject.setLabels(project.getLabels());
-        newProject.setCreatedAt(java.time.LocalDateTime.now());
-        newProject.setUpdatedAt(java.time.LocalDateTime.now());
+
+        List<Collaborator> collaborators = projectRequest.getCollaborators();
+
+        if (collaborators == null) {
+            collaborators = new ArrayList<>();
+        }
+
+        boolean creatorAlreadyIn = collaborators.stream()
+                .anyMatch(c -> c.getUserId().equals(creatorId));
+        if (!creatorAlreadyIn) {
+            Collaborator creatorCollaborator = new Collaborator();
+            creatorCollaborator.setUserId(creatorId);
+            creatorCollaborator.setRole("creator");
+            collaborators.add(creatorCollaborator);
+        }
+
+        newProject.setCollaborators(collaborators);
+        newProject.setPhases(projectRequest.getPhases());
+        newProject.setLabels(projectRequest.getLabels());
+        newProject.setCreatedAt(LocalDateTime.now());
+        newProject.setUpdatedAt(LocalDateTime.now());
 
         projectRepository.createProject(newProject);
+
         return toResponse(newProject);
     }
+
 
     public ProjectResponse toResponse(Project project) {
         ProjectResponse response = new ProjectResponse();
@@ -56,6 +85,9 @@ public class ProjectService {
         List<CollaboratorResponse> collabResp = project.getCollaborators().stream()
                 .map(c -> {
                     User user = userRepository.findById(c.getUserId());
+                    if(user == null){
+                        System.out.println("User not found!");
+                    }
                     CollaboratorResponse cr = new CollaboratorResponse();
                     cr.setUserId(c.getUserId().toString());
                     cr.setDisplayName(user != null ? user.getDisplayName() : "Unknown");
@@ -74,8 +106,9 @@ public class ProjectService {
 
 
     public String findUserNameById(ObjectId userId) {
-        User user = userRepository.find("id", userId).firstResult();
+        User user = userRepository.findById(userId);
         return user != null ? user.getDisplayName() : "Unknown";
     }
+
 
 }

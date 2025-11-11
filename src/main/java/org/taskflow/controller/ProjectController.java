@@ -4,16 +4,15 @@ import io.quarkus.security.Authenticated;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.taskflow.dto.ProjectRequest;
 import org.taskflow.dto.ProjectResponse;
 import org.taskflow.service.ProjectService;
+
+import java.util.List;
 
 @Path("/api/project")
 @Produces(MediaType.APPLICATION_JSON)
@@ -32,6 +31,12 @@ public class ProjectController {
     public ObjectId getCurrentUserId() {
         JsonWebToken jwt = jwtInstance.get();
         return new ObjectId(jwt.getSubject());
+    }
+
+    @GET
+    public List<ProjectResponse> getProjectsByUserId() {
+        ObjectId currentUserId = getCurrentUserId();
+        return projectService.getByUserId(currentUserId);
     }
 
     @POST
