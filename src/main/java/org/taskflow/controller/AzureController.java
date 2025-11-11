@@ -9,6 +9,6 @@ public class AzureController {
     @Path("/hello")
     @GET
     public String hello() {
-        return "Hello, Azure!";
+        return "Hello from Quarkus REST";
     }
 }
