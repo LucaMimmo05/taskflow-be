@@ -38,4 +38,12 @@ public class ApiError {
     public void setMessage(String message) {
         this.message = message;
     }
+
+    public LocalDate getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDate timestamp) {
+        this.timestamp = timestamp;
+    }
 }

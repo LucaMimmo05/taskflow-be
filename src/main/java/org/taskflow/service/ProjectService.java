@@ -6,7 +6,6 @@ import org.bson.types.ObjectId;
 import org.taskflow.dto.CollaboratorResponse;
 import org.taskflow.dto.ProjectRequest;
 import org.taskflow.dto.ProjectResponse;
-import org.taskflow.exception.BadRequestException;
 import org.taskflow.model.Project;
 import org.taskflow.model.User;
 import org.taskflow.repository.ProjectRepository;
