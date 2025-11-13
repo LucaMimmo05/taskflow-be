@@ -2,7 +2,6 @@ package org.taskflow.controller;
 
 import com.mongodb.client.MongoClient;
 import io.quarkus.security.Authenticated;
-import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

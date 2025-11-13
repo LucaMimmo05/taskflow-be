@@ -20,20 +20,6 @@ public class UserService {
     UserRepository userRepository;
 
     public LoginResponse createUser(UserRequest userRequest) {
-        if (userRequest.getDisplayName() == null || userRequest.getDisplayName().isEmpty()) {
-            throw new BadRequestException("Display name is required");
-        }
-        if (userRequest.getEmail() == null || userRequest.getEmail().isEmpty()) {
-            throw new BadRequestException("Email is required");
-        }
-        if (userRequest.getPassword() == null || userRequest.getPassword().isEmpty()) {
-            throw new BadRequestException("Password is required");
-        }
-
-        if(userRepository.findByEmail(userRequest.getEmail()) != null) {
-            throw new BadRequestException("Email already in use");
-        }
-
         User newUser = new User();
         newUser.setDisplayName(userRequest.getDisplayName());
         newUser.setEmail(userRequest.getEmail());

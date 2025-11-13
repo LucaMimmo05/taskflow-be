@@ -1,7 +1,5 @@
 package org.taskflow.dto;
 
-import org.taskflow.dto.UserResponse;
-
 public class LoginResponse {
     public String message;
     public String accessToken;
