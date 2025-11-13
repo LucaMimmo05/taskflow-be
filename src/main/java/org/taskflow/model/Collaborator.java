@@ -1,6 +1,5 @@
 package org.taskflow.model;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.bson.types.ObjectId;
 
@@ -10,10 +9,8 @@ public class Collaborator {
     @NotNull(message = "UserId is required")
     private ObjectId userId;
 
-    @NotBlank(message = "Role cannot be empty")
     private String role;
 
-    @NotNull(message = "JoinedAt cannot be null")
     private LocalDateTime joinedAt;
 
 

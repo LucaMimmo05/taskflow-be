@@ -18,7 +18,7 @@ public class ProjectRequest {
     private List<@Valid Collaborator> collaborators;
 
     @NotNull(message = "Phases list cannot be null")
-    @Size(min = 1, message = "There must be at least one phase")
+    @Size(min = 1, max = 3, message = "There must be at least one phase and at most 3 phases")
     private List<@Valid Phase> phases;
 
     private List<@Valid Label> labels;
