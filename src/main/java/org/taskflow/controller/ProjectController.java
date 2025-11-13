@@ -8,8 +8,10 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.taskflow.dto.CollaboratorRequest;
 import org.taskflow.dto.ProjectRequest;
 import org.taskflow.dto.ProjectResponse;
+import org.taskflow.dto.ProjectUpdateRequest;
 import org.taskflow.service.ProjectService;
 
 import java.util.List;
@@ -43,5 +45,26 @@ public class ProjectController {
     public ProjectResponse createProject(@Valid ProjectRequest projectRequest) {
         ObjectId currentUserId = getCurrentUserId();
         return projectService.create(projectRequest, currentUserId);
+    }
+
+    @PUT
+    @Path("/{id}")
+    public ProjectResponse updateProject(@Valid ProjectUpdateRequest projectUpdateRequest, @PathParam("id") String id) {
+        ObjectId currentUserId = getCurrentUserId();
+        return projectService.update(projectUpdateRequest, currentUserId, new ObjectId(id));
+    }
+
+    @POST
+    @Path("/{id}/collaborators")
+    public ProjectResponse addCollaborator(@Valid CollaboratorRequest collaboratorRequest, @PathParam("id") String id) {
+        ObjectId currentUserId = getCurrentUserId();
+        return projectService.addCollaborator(new ObjectId(id), currentUserId, collaboratorRequest);
+    }
+
+    @DELETE
+    @Path("/{id}/collaborators/{collaboratorId}")
+    public ProjectResponse removeCollaborator(@PathParam("id") String id, @PathParam("collaboratorId") String collaboratorId) {
+        ObjectId currentUserId = getCurrentUserId();
+        return projectService.removeCollaborator(new ObjectId(id), currentUserId, new ObjectId(collaboratorId));
     }
 }
