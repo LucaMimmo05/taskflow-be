@@ -271,12 +271,13 @@ Authorization: Bearer <jwt_token>
 **Validations:**
 - `title`: required, not empty
 - `phases`: required, minimum 1 phase, maximum 3 phases
-- `collaborators`: optional, if empty or not present, only the creator is automatically added
+- `collaborators`: optional, can be empty or omitted
 - `labels`: optional
 
 **Notes:**
 - The creator is automatically added to the collaborators list with role "creator"
 - The `joinedAt` field is automatically set by the server for all collaborators
+- You don't need to pass `joinedAt` in the request
 
 **Response:** `200 OK`
 ```json
@@ -318,7 +319,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 **Errors:**
-- `400 Bad Request`: Validation error
+- `400 Bad Request`: Validation error (e.g., more than 3 phases)
 
 ---
 
@@ -352,9 +353,14 @@ Authorization: Bearer <jwt_token>
 }
 ```
 
+**Validations:**
+- All fields are optional (nullable)
+- `phases`: maximum 3 phases if provided
+
 **Notes:**
 - You can send only the fields you want to update
-- Collaborators **CANNOT** be updated through this endpoint (use dedicated endpoints)
+- Collaborators **CANNOT** be updated through this endpoint (use dedicated endpoints `/api/project/{id}/collaborators`)
+- Null or omitted fields are ignored and keep their current values
 
 **Response:** `200 OK`
 ```json
@@ -389,10 +395,35 @@ Authorization: Bearer <jwt_token>
 **Errors:**
 - `404 Not Found`: Project not found
 - `403 Forbidden`: User is not the project creator
+- `400 Bad Request`: Validation error (e.g., more than 3 phases)
 
 ---
 
-### 9. Add Collaborator
+### 9. Delete Project
+
+**Endpoint:** `DELETE /api/project/{id}`
+
+**Authentication:** Required
+
+**Permissions:** Only the project creator can delete it
+
+**Path Parameters:**
+- `id`: Project ID (ObjectId string)
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Project deleted successfully"
+}
+```
+
+**Errors:**
+- `404 Not Found`: Project not found
+- `403 Forbidden`: User is not the project creator
+
+---
+
+### 10. Add Collaborator
 
 **Endpoint:** `POST /api/project/{id}/collaborators`
 
@@ -406,17 +437,16 @@ Authorization: Bearer <jwt_token>
 **Request Body:**
 ```json
 {
-  "userId": "507f1f77bcf86cd799439013",
-  "role": "member"
+  "userId": "507f1f77bcf86cd799439013"
 }
 ```
 
 **Validations:**
 - `userId`: required, not empty
-- `role`: optional, default "member"
 
 **Notes:**
-- The `joinedAt` field is automatically set by the server
+- The `role` is automatically set to "member" by the server
+- The `joinedAt` field is automatically set to the current timestamp
 - Cannot add the same collaborator twice
 
 **Response:** `200 OK`
@@ -451,20 +481,33 @@ Authorization: Bearer <jwt_token>
 
 ---
 
-### 10. Remove Collaborator
+### 11. Remove Collaborator
 
-**Endpoint:** `DELETE /api/project/{id}/collaborators/{collaboratorId}`
+**Endpoint:** `DELETE /api/project/{id}/collaborators`
 
 **Authentication:** Required
 
-**Permissions:** Only the project creator can remove collaborators
+**Permissions:** 
+- Any collaborator can remove themselves from the project
+- Only the project creator can remove other collaborators
 
 **Path Parameters:**
 - `id`: Project ID (ObjectId string)
-- `collaboratorId`: User ID to remove (ObjectId string)
 
-**Notes:**
-- The creator cannot remove themselves
+**Request Body:**
+```json
+{
+  "userId": "507f1f77bcf86cd799439013"
+}
+```
+
+**Validations:**
+- `userId`: required, not empty
+
+**Permission Rules:**
+1. **Self-removal**: Any collaborator can remove themselves by passing their own `userId`
+2. **Remove others**: Only the project creator can remove other collaborators
+3. **Creator protection**: The project creator cannot remove themselves
 
 **Response:** `200 OK`
 ```json
@@ -488,293 +531,108 @@ Authorization: Bearer <jwt_token>
 
 **Errors:**
 - `404 Not Found`: Project not found
-- `403 Forbidden`: User is not the project creator
-- `400 Bad Request`: Cannot remove the project creator
+- `403 Forbidden`: User trying to remove another collaborator but is not the project creator
+- `400 Bad Request`: The project creator cannot remove themselves
+
+**Usage Examples:**
+
+*Example 1: A member leaving the project*
+```json
+// User ID 507f1f77bcf86cd799439013 wants to leave the project
+DELETE /api/project/507f1f77bcf86cd799439011/collaborators
+{
+  "userId": "507f1f77bcf86cd799439013"
+}
+// ✅ Success - user removed from project
+```
+
+*Example 2: Creator removing a member**
+```json
+// Creator (507f1f77bcf86cd799439011) wants to remove member 507f1f77bcf86cd799439013
+DELETE /api/project/507f1f77bcf86cd799439011/collaborators
+{
+  "userId": "507f1f77bcf86cd799439013"
+}
+// ✅ Success - member removed by creator
+```
+
+*Example 3: Creator trying to leave (not allowed)**
+```json
+// Creator trying to remove themselves
+DELETE /api/project/507f1f77bcf86cd799439011/collaborators
+{
+  "userId": "507f1f77bcf86cd799439011"
+}
+// ❌ Error: "The project creator cannot remove themselves"
+```
 
 ---
 
 ## Health Check API
 
-### 11. Check MongoDB Connection
+### 12. Check MongoDB Connection
 
 **Endpoint:** `GET /health`
 
-**Authentication:** Required
+**Authentication:** Not required
 
-**Description:** Checks if the MongoDB connection is working properly.
-
-**Response:** `200 OK`
-```
-✅ MongoDB connection OK!
-```
-
-**Errors:**
-- `500 Internal Server Error`: MongoDB connection failed
-
----
-
-### 12. Check JWT Token
-
-**Endpoint:** `GET /health/jwt`
-
-**Authentication:** Required
-
-**Description:** Verifies that the JWT token is valid and returns the user principal name.
+**Description:** Checks if the backend can connect to MongoDB.
 
 **Response:** `200 OK`
-```
-user@example.com
-```
-
-**Errors:**
-- `401 Unauthorized`: Invalid or missing token
-
----
-
-## HTTP Status Codes
-
-- `200 OK`: Request executed successfully
-- `400 Bad Request`: Validation error or invalid data
-- `401 Unauthorized`: Authentication failed or invalid token
-- `403 Forbidden`: User does not have necessary permissions
-- `404 Not Found`: Resource not found
-- `500 Internal Server Error`: Server error
-
----
-
-## Error Format
-
-All errors return a JSON object with the following format:
-
 ```json
 {
-  "title": "Error title",
-  "status": 400,
-  "detail": "Detailed error description"
+  "status": "UP",
+  "mongodb": "connected"
 }
 ```
 
-For validation errors (constraint violations):
+**Errors:**
+- `503 Service Unavailable`: MongoDB connection failed
 
+---
+
+## Common Error Responses
+
+### 400 Bad Request
 ```json
 {
   "title": "Constraint Violation",
   "status": 400,
   "violations": [
     {
-      "field": "fieldName",
-      "message": "Error message"
+      "field": "email",
+      "message": "must be a well-formed email address"
     }
   ]
 }
 ```
 
----
-
-## Data Models
-
-### User
+### 401 Unauthorized
 ```json
 {
-  "id": "string (ObjectId)",
-  "email": "string",
-  "displayName": "string",
-  "notifyOnDue": "boolean"
+  "message": "Invalid credentials"
 }
 ```
 
-### Collaborator
+### 403 Forbidden
 ```json
 {
-  "userId": "string (ObjectId)",
-  "role": "string",
-  "joinedAt": "datetime (ISO 8601)"
+  "message": "You are not allowed to update this project"
 }
 ```
 
-### Phase
+### 404 Not Found
 ```json
 {
-  "name": "string",
-  "order": "integer"
-}
-```
-
-### Label
-```json
-{
-  "name": "string",
-  "color": "string (hex color)"
-}
-```
-
-### Project
-```json
-{
-  "id": "string (ObjectId)",
-  "title": "string",
-  "creatorName": "string",
-  "collaborators": "array of Collaborator",
-  "phases": "array of Phase",
-  "labels": "array of Label",
-  "createdAt": "datetime (ISO 8601)",
-  "updatedAt": "datetime (ISO 8601)"
+  "message": "Project not found"
 }
 ```
 
 ---
 
-## General Notes
+## Notes
 
-1. **Dates and Times:** All datetime fields are in ISO 8601 format (e.g., `2025-11-13T16:00:00`)
-2. **ObjectId:** MongoDB IDs are 24-character hexadecimal strings
-3. **JWT Token:** JWT token has a duration of 24 hours (configurable)
-4. **Collaborator Roles:** Supported roles are: `creator`, `admin`, `member`
-5. **Limits:** Maximum 3 phases per project
-6. **Password Security:** Passwords are hashed using bcrypt before storage
-7. **Email Uniqueness:** Each email can only be registered once
-
----
-
-## Usage Examples
-
-### Complete Flow: User Registration and Project Creation
-
-#### 1. Register a New User
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "displayName": "John Doe",
-    "email": "john@example.com",
-    "password": "securepass123",
-    "notifyOnDue": true
-  }'
-```
-
-**Response:**
-```json
-{
-  "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "507f1f77bcf86cd799439011",
-    "email": "john@example.com",
-    "displayName": "John Doe",
-    "notifyOnDue": true
-  }
-}
-```
-
-#### 2. Login (Alternative to Registration)
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "password": "securepass123"
-  }'
-```
-
-#### 3. Create a New Project
-```bash
-curl -X POST http://localhost:8080/api/project \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "title": "My Awesome Project",
-    "phases": [
-      {"name": "To Do", "order": 1},
-      {"name": "In Progress", "order": 2},
-      {"name": "Done", "order": 3}
-    ],
-    "labels": [
-      {"name": "Bug", "color": "#FF0000"},
-      {"name": "Feature", "color": "#00FF00"}
-    ]
-  }'
-```
-
-#### 4. Get All Projects
-```bash
-curl -X GET http://localhost:8080/api/project \
-  -H "Authorization: Bearer <token>"
-```
-
-#### 5. Add a Collaborator to Project
-```bash
-curl -X POST http://localhost:8080/api/project/{projectId}/collaborators \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "userId": "507f1f77bcf86cd799439012",
-    "role": "admin"
-  }'
-```
-
-#### 6. Update Project
-```bash
-curl -X PUT http://localhost:8080/api/project/{projectId} \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "title": "Updated Project Title"
-  }'
-```
-
-#### 7. Update User Settings
-```bash
-curl -X PUT http://localhost:8080/api/user/settings \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "notifyOnDue": false
-  }'
-```
-
-#### 8. Remove Collaborator from Project
-```bash
-curl -X DELETE http://localhost:8080/api/project/{projectId}/collaborators/{collaboratorId} \
-  -H "Authorization: Bearer <token>"
-```
-
-#### 9. Delete User Account
-```bash
-curl -X DELETE http://localhost:8080/api/user \
-  -H "Authorization: Bearer <token>"
-```
-
-#### 10. Check MongoDB Connection
-```bash
-curl -X GET http://localhost:8080/health \
-  -H "Authorization: Bearer <token>"
-```
-
----
-
-## Security Considerations
-
-1. **JWT Token Storage:** Store the JWT token securely on the client side (e.g., HttpOnly cookies or secure storage)
-2. **HTTPS:** Always use HTTPS in production to encrypt data in transit
-3. **Password Requirements:** Enforce strong passwords (minimum 8 characters)
-4. **Token Expiration:** JWT tokens expire after 24 hours - implement token refresh logic
-5. **Input Validation:** All inputs are validated on the server side
-6. **Authorization:** Users can only access and modify resources they have permission for
-
----
-
-## Rate Limiting
-
-Currently, no rate limiting is implemented. Consider adding rate limiting in production to prevent abuse.
-
----
-
-## Pagination
-
-Currently, the `GET /api/project` endpoint returns all projects. Consider implementing pagination for large datasets in production.
-
----
-
-**API Version:** 1.0  
-**Last Updated:** November 13, 2025  
-**Base URL:** `http://localhost:8080` (development)
-
+- All timestamps are in ISO 8601 format (e.g., `2025-11-13T10:30:00`)
+- ObjectId fields are represented as 24-character hexadecimal strings
+- JWT tokens are valid for the duration specified in the server configuration
+- The `joinedAt` field for collaborators is automatically managed by the server and should not be sent in requests

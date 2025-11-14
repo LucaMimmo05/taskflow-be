@@ -110,6 +110,19 @@ public class ProjectService {
         return toResponse(existing);
     }
 
+    public void delete(ObjectId userId, ObjectId id) {
+        Project existing = projectRepository.getProjectById(id);
+        if (existing == null) {
+            throw new NotFoundException("Project not found");
+        }
+
+        if (!existing.getCreatorId().equals(userId)) {
+            throw new ForbiddenException("You are not allowed to delete this project");
+        }
+
+        projectRepository.deleteProject(existing);
+    }
+
     public ProjectResponse addCollaborator(ObjectId projectId, ObjectId userId, CollaboratorRequest collaboratorRequest) {
         Project existing = projectRepository.getProjectById(projectId);
         if (existing == null) {
@@ -149,12 +162,18 @@ public class ProjectService {
             throw new NotFoundException("Project not found");
         }
 
-        if (!existing.getCreatorId().equals(userId)) {
-            throw new ForbiddenException("You are not allowed to modify this project");
-        }
-
+        // Se l'utente sta rimuovendo se stesso
         if (collaboratorUserId.equals(userId)) {
-            throw new BadRequestException("The project creator cannot remove themselves");
+            // Il creatore non può rimuovere se stesso
+            if (userId.equals(existing.getCreatorId())) {
+                throw new BadRequestException("The project creator cannot remove themselves");
+            }
+            // Altrimenti permetti al collaboratore di uscire dal progetto
+        } else {
+            // Se sta rimuovendo qualcun altro, deve essere il creatore
+            if (!existing.getCreatorId().equals(userId)) {
+                throw new ForbiddenException("Only the project creator can remove other collaborators");
+            }
         }
 
         List<Collaborator> collaborators = existing.getCollaborators();

@@ -25,4 +25,8 @@ public class ProjectRepository implements PanacheMongoRepository<Project> {
     public void updateProject(Project project) {
         persistOrUpdate(project);
     }
+
+    public void deleteProject(Project project) {
+        delete(project);
+    }
 }
