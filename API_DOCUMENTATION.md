@@ -209,17 +209,20 @@ Authorization: Bearer <jwt_token>
     ],
     "phases": [
       {
-        "name": "To Do",
-        "order": 1
+        "id": "phase1",
+        "title": "To Do",
+        "position": 0
       },
       {
-        "name": "In Progress",
-        "order": 2
+        "id": "phase2",
+        "title": "In Progress",
+        "position": 1
       }
     ],
     "labels": [
       {
-        "name": "Bug",
+        "id": "label1",
+        "title": "Bug",
         "color": "#FF0000"
       }
     ],
@@ -251,17 +254,20 @@ Authorization: Bearer <jwt_token>
   ],
   "phases": [
     {
-      "name": "To Do",
-      "order": 1
+      "id": "phase1",
+      "title": "To Do",
+      "position": 0
     },
     {
-      "name": "Done",
-      "order": 2
+      "id": "phase2",
+      "title": "Done",
+      "position": 1
     }
   ],
   "labels": [
     {
-      "name": "Feature",
+      "id": "label1",
+      "title": "Feature",
       "color": "#00FF00"
     }
   ]
@@ -271,8 +277,13 @@ Authorization: Bearer <jwt_token>
 **Validations:**
 - `title`: required, not empty
 - `phases`: required, minimum 1 phase, maximum 3 phases
+- `phases[].id`: required, not empty
+- `phases[].title`: required, not empty
+- `phases[].position`: required, cannot be negative
+- `labels[].id`: required, not empty (if labels provided)
+- `labels[].title`: required, not empty (if labels provided)
+- `labels[].color`: required, not empty (if labels provided)
 - `collaborators`: optional, can be empty or omitted
-- `labels`: optional
 
 **Notes:**
 - The creator is automatically added to the collaborators list with role "creator"
@@ -299,17 +310,20 @@ Authorization: Bearer <jwt_token>
   ],
   "phases": [
     {
-      "name": "To Do",
-      "order": 1
+      "id": "phase1",
+      "title": "To Do",
+      "position": 0
     },
     {
-      "name": "Done",
-      "order": 2
+      "id": "phase2",
+      "title": "Done",
+      "position": 1
     }
   ],
   "labels": [
     {
-      "name": "Feature",
+      "id": "label1",
+      "title": "Feature",
       "color": "#00FF00"
     }
   ],
@@ -340,13 +354,15 @@ Authorization: Bearer <jwt_token>
   "title": "Updated Title",
   "phases": [
     {
-      "name": "Backlog",
-      "order": 1
+      "id": "phase1",
+      "title": "Backlog",
+      "position": 0
     }
   ],
   "labels": [
     {
-      "name": "Priority",
+      "id": "label1",
+      "title": "Priority",
       "color": "#FFA500"
     }
   ]
@@ -377,13 +393,15 @@ Authorization: Bearer <jwt_token>
   ],
   "phases": [
     {
-      "name": "Backlog",
-      "order": 1
+      "id": "phase1",
+      "title": "Backlog",
+      "position": 0
     }
   ],
   "labels": [
     {
-      "name": "Priority",
+      "id": "label1",
+      "title": "Priority",
       "color": "#FFA500"
     }
   ],
@@ -568,9 +586,140 @@ DELETE /api/project/507f1f77bcf86cd799439011/collaborators
 
 ---
 
+## Task API
+
+### 12. Get Tasks by Project
+
+**Endpoint:** `GET /api/task/{projectId}`
+
+**Authentication:** Required
+
+**Description:** Returns all tasks for a specific project.
+
+**Path Parameters:**
+- `projectId`: Project ID (ObjectId string)
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": "507f1f77bcf86cd799439020",
+    "projectId": "507f1f77bcf86cd799439011",
+    "title": "Fix login bug",
+    "description": "Users cannot login with special characters in password",
+    "phaseId": "phase1",
+    "labels": [
+      {
+        "id": "label1",
+        "title": "Bug",
+        "color": "#FF0000"
+      },
+      {
+        "id": "label2",
+        "title": "Priority",
+        "color": "#FFA500"
+      }
+    ],
+    "assignees": [
+      {
+        "userId": "507f1f77bcf86cd799439012",
+        "displayName": "Jane Smith"
+      }
+    ],
+    "createdBy": "507f1f77bcf86cd799439011",
+    "createdByName": "John Doe",
+    "dueDate": "2025-11-20T18:00:00",
+    "createdAt": "2025-11-13T10:30:00",
+    "updatedAt": "2025-11-13T15:45:00"
+  }
+]
+```
+
+**Errors:**
+- `401 Unauthorized`: Invalid or missing token
+- `404 Not Found`: Project not found
+
+---
+
+### 13. Create Task
+
+**Endpoint:** `POST /api/task/{projectId}`
+
+**Authentication:** Required
+
+**Description:** Creates a new task in the specified project.
+
+**Path Parameters:**
+- `projectId`: Project ID (ObjectId string)
+
+**Request Body:**
+```json
+{
+  "title": "Implement user profile page",
+  "description": "Create a page where users can view and edit their profile information",
+  "phaseId": "phase1",
+  "labelIds": ["label1", "label2"],
+  "assignees": ["507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013"],
+  "dueDate": "2025-11-25T18:00:00"
+}
+```
+
+**Validations:**
+- `title`: required, not blank
+- `phaseId`: required, not blank
+- `description`: optional
+- `labelIds`: optional, array of label IDs (strings)
+- `assignees`: optional, array of user IDs (strings)
+- `dueDate`: optional, ISO 8601 format
+
+**Response:** `200 OK`
+```json
+{
+  "id": "507f1f77bcf86cd799439021",
+  "projectId": "507f1f77bcf86cd799439011",
+  "title": "Implement user profile page",
+  "description": "Create a page where users can view and edit their profile information",
+  "phaseId": "phase1",
+  "labels": [
+    {
+      "id": "label1",
+      "title": "Feature",
+      "color": "#00FF00"
+    },
+    {
+      "id": "label2",
+      "title": "Priority",
+      "color": "#FFA500"
+    }
+  ],
+  "assignees": [
+    {
+      "userId": "507f1f77bcf86cd799439012",
+      "displayName": "Jane Smith"
+    },
+    {
+      "userId": "507f1f77bcf86cd799439013",
+      "displayName": "Bob Wilson"
+    }
+  ],
+  "createdBy": "507f1f77bcf86cd799439011",
+  "createdByName": "John Doe",
+  "dueDate": "2025-11-25T18:00:00",
+  "createdAt": "2025-11-16T10:00:00",
+  "updatedAt": "2025-11-16T10:00:00"
+}
+```
+
+**Errors:**
+- `400 Bad Request`: Validation error
+- `401 Unauthorized`: Invalid or missing token
+- `404 Not Found`: Project not found
+
+---
+
 ## Health Check API
 
-### 12. Check MongoDB Connection
+### 15. Check MongoDB Connection
 
 **Endpoint:** `GET /health`
 
