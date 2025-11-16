@@ -57,7 +57,6 @@ public class ProjectService {
             collaborators = new ArrayList<>();
         }
 
-        // Imposta joinedAt per tutti i collaboratori passati nella request
         LocalDateTime now = LocalDateTime.now();
         for (Collaborator collaborator : collaborators) {
             if (collaborator.getJoinedAt() == null) {
