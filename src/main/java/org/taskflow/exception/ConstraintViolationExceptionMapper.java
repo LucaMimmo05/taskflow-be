@@ -1,0 +1,60 @@
+package org.taskflow.exception;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Provider
+public class ConstraintViolationExceptionMapper implements ExceptionMapper<ConstraintViolationException> {
+
+    @Override
+    public Response toResponse(ConstraintViolationException exception) {
+        List<Map<String, String>> violations = exception.getConstraintViolations()
+                .stream()
+                .map(this::mapViolation)
+                .collect(Collectors.toList());
+
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("title", "Constraint Violation");
+        errorResponse.put("status", 400);
+        errorResponse.put("violations", violations);
+
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity(errorResponse)
+                .build();
+    }
+
+    private Map<String, String> mapViolation(ConstraintViolation<?> violation) {
+        Map<String, String> error = new HashMap<>();
+
+        // Estrae solo l'ultimo segmento del path (il nome del campo effettivo)
+        String fullPath = violation.getPropertyPath().toString();
+        String fieldName = extractFieldName(fullPath);
+
+        error.put("field", fieldName);
+        error.put("message", violation.getMessage());
+
+        return error;
+    }
+
+    private String extractFieldName(String fullPath) {
+        // Rimuove il prefisso del metodo e dell'oggetto (es. "register.userRequest.email" -> "email")
+        String[] parts = fullPath.split("\\.");
+
+        // Se ci sono almeno 2 parti, prende l'ultima (il nome del campo)
+        if (parts.length >= 2) {
+            return parts[parts.length - 1];
+        }
+
+        // Altrimenti ritorna il path completo (fallback)
+        return fullPath;
+    }
+}
+
