@@ -40,7 +40,9 @@ Authorization: Bearer <jwt_token>
 **Response:** `200 OK`
 ```json
 {
-  "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "message": "User registered successfully",
+  "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "id": "507f1f77bcf86cd799439011",
     "email": "user@example.com",
@@ -74,7 +76,8 @@ Authorization: Bearer <jwt_token>
 **Response:** `200 OK`
 ```json
 {
-  "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "id": "507f1f77bcf86cd799439011",
     "email": "user@example.com",
