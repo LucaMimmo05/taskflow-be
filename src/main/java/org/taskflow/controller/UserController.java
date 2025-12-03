@@ -49,6 +49,12 @@ public class UserController {
         userService.deleteUser(userId);
         return new MessageResponse("User has been deleted");
     }
+
+    @GET
+    @Path("/search")
+    public UserResponse getUserByEmail(@QueryParam("email") String email) {
+        return userService.getUserByEmail(email);
+    }
     
 }
 
