@@ -39,6 +39,21 @@ public class ProjectService {
         return toResponse(project);
     }
 
+    public ProjectResponse getById(ObjectId projectId, ObjectId userId) {
+        Project project = projectRepository.getProjectById(projectId);
+        if (project == null) {
+            throw new NotFoundException("Project not found");
+        }
+
+        boolean isCollaborator = project.getCollaborators().stream()
+                .anyMatch(c -> c.getUserId().equals(userId));
+        if (!isCollaborator) {
+            throw new ForbiddenException("You don't have access to this project");
+        }
+
+        return toResponse(project);
+    }
+
     public List<ProjectResponse> getByUserId(ObjectId userId) {
         List<Project> projects = projectRepository.getProjectsByUserId(userId);
         return projects.stream()
@@ -161,15 +176,11 @@ public class ProjectService {
             throw new NotFoundException("Project not found");
         }
 
-        // Se l'utente sta rimuovendo se stesso
         if (collaboratorUserId.equals(userId)) {
-            // Il creatore non può rimuovere se stesso
             if (userId.equals(existing.getCreatorId())) {
                 throw new BadRequestException("The project creator cannot remove themselves");
             }
-            // Altrimenti permetti al collaboratore di uscire dal progetto
         } else {
-            // Se sta rimuovendo qualcun altro, deve essere il creatore
             if (!existing.getCreatorId().equals(userId)) {
                 throw new ForbiddenException("Only the project creator can remove other collaborators");
             }
