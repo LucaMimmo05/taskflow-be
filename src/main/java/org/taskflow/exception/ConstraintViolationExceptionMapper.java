@@ -34,7 +34,6 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
     private Map<String, String> mapViolation(ConstraintViolation<?> violation) {
         Map<String, String> error = new HashMap<>();
 
-        // Estrae solo l'ultimo segmento del path (il nome del campo effettivo)
         String fullPath = violation.getPropertyPath().toString();
         String fieldName = extractFieldName(fullPath);
 
@@ -45,15 +44,12 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
     }
 
     private String extractFieldName(String fullPath) {
-        // Rimuove il prefisso del metodo e dell'oggetto (es. "register.userRequest.email" -> "email")
         String[] parts = fullPath.split("\\.");
 
-        // Se ci sono almeno 2 parti, prende l'ultima (il nome del campo)
         if (parts.length >= 2) {
             return parts[parts.length - 1];
         }
 
-        // Altrimenti ritorna il path completo (fallback)
         return fullPath;
     }
 }
