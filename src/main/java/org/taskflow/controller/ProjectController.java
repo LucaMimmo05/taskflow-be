@@ -38,6 +38,13 @@ public class ProjectController {
         return projectService.getByUserId(currentUserId);
     }
 
+    @GET
+    @Path("/{id}")
+    public ProjectResponse getProjectById(@PathParam("id") String id) {
+        ObjectId currentUserId = getCurrentUserId();
+        return projectService.getById(new ObjectId(id), currentUserId);
+    }
+
     @POST
     public ProjectResponse createProject(@Valid ProjectRequest projectRequest) {
         ObjectId currentUserId = getCurrentUserId();
@@ -68,7 +75,7 @@ public class ProjectController {
 
     @DELETE
     @Path("/{id}/collaborators")
-    public ProjectResponse removeCollaborator(@Valid CollaboratorRequest collaboratorRequest,@PathParam("id") String id, @PathParam("collaboratorId") String collaboratorId) {
+    public ProjectResponse removeCollaborator(@Valid CollaboratorRequest collaboratorRequest,@PathParam("id") String id) {
         ObjectId currentUserId = getCurrentUserId();
         return projectService.removeCollaborator(new ObjectId(id), currentUserId, new ObjectId(collaboratorRequest.getUserId()));
     }
