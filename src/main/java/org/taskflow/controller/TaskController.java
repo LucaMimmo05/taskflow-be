@@ -5,6 +5,7 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.bson.types.ObjectId;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.taskflow.dto.TaskRequest;
@@ -12,6 +13,7 @@ import org.taskflow.dto.TaskResponse;
 import org.taskflow.service.TaskService;
 
 import java.util.List;
+import java.util.Map;
 
 @Path("/api/task")
 @Produces(MediaType.APPLICATION_JSON)
@@ -40,5 +42,18 @@ public class TaskController {
     @Path("/{projectId}")
     public TaskResponse createTask(TaskRequest taskRequest, @PathParam("projectId") String projectId) {
         return taskService.createTask(taskRequest, new ObjectId(projectId), getCurrentUserId());
+    }
+
+    @PUT
+    @Path("/{taskId}")
+    public TaskResponse updateTask(TaskRequest taskRequest, @PathParam("taskId") String taskId) {
+        return taskService.updateTask(new ObjectId(taskId), taskRequest, getCurrentUserId());
+    }
+
+    @DELETE
+    @Path("/{taskId}")
+    public Response deleteTask(@PathParam("taskId") String taskId) {
+        taskService.deleteTask(new ObjectId(taskId), getCurrentUserId());
+        return Response.ok(Map.of("message", "Task eliminata con successo")).build();
     }
 }
