@@ -17,4 +17,20 @@ public class TaskRepository implements PanacheMongoRepository<Task> {
     public void createTask(Task task) {
         persist(task);
     }
+
+    public Task findByTaskId(ObjectId taskId) {
+        return findById(taskId);
+    }
+
+    public void updateTask(Task task) {
+        update(task);
+    }
+
+    public void deleteTask(ObjectId taskId) {
+        deleteById(taskId);
+    }
+
+    public void deleteTasksByProjectId(ObjectId projectId) {
+        delete("projectId", projectId);
+    }
 }
