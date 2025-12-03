@@ -111,6 +111,18 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    public UserResponse getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new NotFoundException("User not found with email: " + email);
+        }
+        return new UserResponse(
+                user.getId().toString(),
+                user.getEmail(),
+                user.getDisplayName()
+        );
+    }
+
     public String hashPassword(String plainPassword) {
         return BCrypt.hashpw(plainPassword, BCrypt.gensalt());
     }

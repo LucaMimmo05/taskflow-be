@@ -4,7 +4,7 @@ public class LoginResponse {
     public String message;
     public String accessToken;
     public String refreshToken;
-    public UserResponse user;  // nuovo campo
+    public UserResponse user;
 
     public LoginResponse(String message, String accessToken, String refreshToken, UserResponse user) {
         this.message = message;

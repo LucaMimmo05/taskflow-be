@@ -8,8 +8,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
 import org.eclipse.microprofile.jwt.JsonWebToken;
-import org.taskflow.dto.ProjectRequest;
-import org.taskflow.dto.ProjectResponse;
+import org.taskflow.dto.*;
 import org.taskflow.service.ProjectService;
 
 import java.util.List;
@@ -39,9 +38,45 @@ public class ProjectController {
         return projectService.getByUserId(currentUserId);
     }
 
+    @GET
+    @Path("/{id}")
+    public ProjectResponse getProjectById(@PathParam("id") String id) {
+        ObjectId currentUserId = getCurrentUserId();
+        return projectService.getById(new ObjectId(id), currentUserId);
+    }
+
     @POST
     public ProjectResponse createProject(@Valid ProjectRequest projectRequest) {
         ObjectId currentUserId = getCurrentUserId();
         return projectService.create(projectRequest, currentUserId);
+    }
+
+    @PUT
+    @Path("/{id}")
+    public ProjectResponse updateProject(@Valid ProjectUpdateRequest projectUpdateRequest, @PathParam("id") String id) {
+        ObjectId currentUserId = getCurrentUserId();
+        return projectService.update(projectUpdateRequest, currentUserId, new ObjectId(id));
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public MessageResponse deleteProject(@PathParam("id") String id) {
+        ObjectId currentUserId = getCurrentUserId();
+        projectService.delete(currentUserId, new ObjectId(id));
+        return new MessageResponse("Project deleted successfully");
+    }
+
+    @POST
+    @Path("/{id}/collaborators")
+    public ProjectResponse addCollaborator(@Valid CollaboratorRequest collaboratorRequest, @PathParam("id") String id) {
+        ObjectId currentUserId = getCurrentUserId();
+        return projectService.addCollaborator(new ObjectId(id), currentUserId, collaboratorRequest);
+    }
+
+    @DELETE
+    @Path("/{id}/collaborators")
+    public ProjectResponse removeCollaborator(@Valid CollaboratorRequest collaboratorRequest,@PathParam("id") String id) {
+        ObjectId currentUserId = getCurrentUserId();
+        return projectService.removeCollaborator(new ObjectId(id), currentUserId, new ObjectId(collaboratorRequest.getUserId()));
     }
 }
