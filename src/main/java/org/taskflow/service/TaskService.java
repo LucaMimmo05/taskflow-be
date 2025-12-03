@@ -97,6 +97,104 @@ public class TaskService {
         return toResponse(task);
     }
 
+    public TaskResponse updateTask(ObjectId taskId, TaskRequest taskRequest, ObjectId userId) {
+        Task task = taskRepository.findByTaskId(taskId);
+        if (task == null) {
+            throw new BadRequestException("Task not found");
+        }
+
+        Project project = projectRepository.findById(task.getProjectId());
+        if (project == null) {
+            throw new BadRequestException("Project not found");
+        }
+
+        boolean isCollaborator = project.getCollaborators().stream()
+                .anyMatch(c -> c.getUserId().equals(userId));
+        if (!isCollaborator) {
+            throw new BadRequestException("User is not a collaborator of this project");
+        }
+
+        if (taskRequest.getPhaseId() != null) {
+            boolean phaseExists = project.getPhases().stream()
+                    .anyMatch(phase -> phase.getId().equals(taskRequest.getPhaseId()));
+            if (!phaseExists) {
+                throw new BadRequestException("Phase ID does not exist in this project");
+            }
+            task.setPhaseId(taskRequest.getPhaseId());
+        }
+
+        if (taskRequest.getLabelIds() != null) {
+            if (!taskRequest.getLabelIds().isEmpty() && (project.getLabels() == null || project.getLabels().isEmpty())) {
+                throw new BadRequestException("Project does not have any labels");
+            }
+
+            if (!taskRequest.getLabelIds().isEmpty()) {
+                List<String> projectLabelIds = project.getLabels().stream()
+                        .map(Label::getId)
+                        .toList();
+
+                for (String labelId : taskRequest.getLabelIds()) {
+                    if (!projectLabelIds.contains(labelId)) {
+                        throw new BadRequestException("Label ID '" + labelId + "' does not exist in this project");
+                    }
+                }
+            }
+            task.setLabelIds(taskRequest.getLabelIds());
+        }
+
+        if (taskRequest.getAssignees() != null) {
+            if (!taskRequest.getAssignees().isEmpty()) {
+                List<ObjectId> collaboratorIds = project.getCollaborators().stream()
+                        .map(Collaborator::getUserId)
+                        .toList();
+
+                List<ObjectId> assigneeIds = taskRequest.getAssignees().stream()
+                        .map(ObjectId::new)
+                        .peek(assigneeId -> {
+                            if (!collaboratorIds.contains(assigneeId)) {
+                                throw new BadRequestException("User ID '" + assigneeId + "' is not a collaborator of this project");
+                            }
+                        })
+                        .collect(Collectors.toList());
+                task.setAssignees(assigneeIds);
+            } else {
+                task.setAssignees(List.of());
+            }
+        }
+
+        if (taskRequest.getTitle() != null) {
+            task.setTitle(taskRequest.getTitle());
+        }
+        if (taskRequest.getDescription() != null) {
+            task.setDescription(taskRequest.getDescription());
+        }
+        task.setDueDate(taskRequest.getDueDate());
+        task.setUpdatedAt(LocalDateTime.now());
+
+        taskRepository.updateTask(task);
+        return toResponse(task);
+    }
+
+    public void deleteTask(ObjectId taskId, ObjectId userId) {
+        Task task = taskRepository.findByTaskId(taskId);
+        if (task == null) {
+            throw new BadRequestException("Task not found");
+        }
+
+        Project project = projectRepository.findById(task.getProjectId());
+        if (project == null) {
+            throw new BadRequestException("Project not found");
+        }
+
+        boolean isCollaborator = project.getCollaborators().stream()
+                .anyMatch(c -> c.getUserId().equals(userId));
+        if (!isCollaborator) {
+            throw new BadRequestException("User is not a collaborator of this project");
+        }
+
+        taskRepository.deleteTask(taskId);
+    }
+
 
     public TaskResponse toResponse(Task task) {
         Project project = projectRepository.findById(task.getProjectId());
