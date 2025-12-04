@@ -15,7 +15,7 @@ public class ProjectRepository implements PanacheMongoRepository<Project> {
     }
 
     public List<Project> getProjectsByUserId(ObjectId userId) {
-        return find("creatorId", userId).list();
+        return find("collaborators.userId", userId).list();
     }
 
     public Project getProjectById(ObjectId projectId) {
