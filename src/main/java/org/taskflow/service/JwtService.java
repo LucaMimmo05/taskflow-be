@@ -1,38 +1,37 @@
 package org.taskflow.service;
 
+import io.smallrye.jwt.build.Jwt;
 import org.taskflow.dto.UserResponse;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
+import java.util.Set;
 
 public class JwtService {
 
     public static String generateAccessToken(UserResponse user) {
-        long now = Instant.now().getEpochSecond();
-        long exp = Instant.now().plus(Duration.ofMinutes(15)).getEpochSecond();
-
-        String header = Base64.getUrlEncoder().withoutPadding().encodeToString(
-                "{\"alg\":\"none\",\"typ\":\"JWT\"}".getBytes());
-
-        String payload = Base64.getUrlEncoder().withoutPadding().encodeToString(
-                String.format("{\"iss\":\"taskflow-app\",\"sub\":\"%s\",\"upn\":\"%s\",\"userId\":\"%s\",\"email\":\"%s\",\"name\":\"%s\",\"groups\":[\"access-token\",\"user\"],\"iat\":%d,\"exp\":%d}",
-                        user.getId(), user.getEmail(), user.getId(), user.getEmail(), user.getDisplayName(), now, exp).getBytes());
-
-        return header + "." + payload + ".";
+        return Jwt.issuer("taskflow-app")
+                .subject(user.getId())
+                .upn(user.getEmail())
+                .claim("userId", user.getId())
+                .claim("email", user.getEmail())
+                .claim("name", user.getDisplayName())
+                .groups(Set.of("access-token", "user"))
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plus(Duration.ofMinutes(15)))
+                .sign();
     }
 
     public static String generateRefreshToken(UserResponse user) {
-        long now = Instant.now().getEpochSecond();
-        long exp = Instant.now().plus(Duration.ofDays(7)).getEpochSecond();
-
-        String header = Base64.getUrlEncoder().withoutPadding().encodeToString(
-                "{\"alg\":\"none\",\"typ\":\"JWT\"}".getBytes());
-
-        String payload = Base64.getUrlEncoder().withoutPadding().encodeToString(
-                String.format("{\"iss\":\"taskflow-app\",\"sub\":\"%s\",\"upn\":\"%s\",\"userId\":\"%s\",\"email\":\"%s\",\"name\":\"%s\",\"groups\":[\"refresh-token\"],\"iat\":%d,\"exp\":%d}",
-                        user.getId(), user.getEmail(), user.getId(), user.getEmail(), user.getDisplayName(), now, exp).getBytes());
-
-        return header + "." + payload + ".";
+        return Jwt.issuer("taskflow-app")
+                .subject(user.getId())
+                .upn(user.getEmail())
+                .claim("userId", user.getId())
+                .claim("email", user.getEmail())
+                .claim("name", user.getDisplayName())
+                .groups(Set.of("refresh-token"))
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plus(Duration.ofDays(7)))
+                .sign();
     }
 }
