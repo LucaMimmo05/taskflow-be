@@ -1,50 +1,38 @@
 package org.taskflow.service;
 
-import io.smallrye.jwt.build.Jwt;
-import io.smallrye.jwt.build.JwtClaimsBuilder;
 import org.taskflow.dto.UserResponse;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Set;
+import java.util.Base64;
 
 public class JwtService {
 
     public static String generateAccessToken(UserResponse user) {
-        try {
-            JwtClaimsBuilder claims = Jwt.claims();
-            claims.issuer("taskflow-app");
-            claims.subject(user.getId());
-            claims.upn(user.getEmail());
-            claims.claim("userId", user.getId());
-            claims.claim("email", user.getEmail());
-            claims.claim("name", user.getDisplayName());
-            claims.groups(Set.of("access-token", "user"));
-            claims.issuedAt(Instant.now());
-            claims.expiresAt(Instant.now().plus(Duration.ofMinutes(15)));
+        long now = Instant.now().getEpochSecond();
+        long exp = Instant.now().plus(Duration.ofMinutes(15)).getEpochSecond();
 
-            return claims.sign("none");
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to generate access token: " + e.getMessage(), e);
-        }
+        String header = Base64.getUrlEncoder().withoutPadding().encodeToString(
+                "{\"alg\":\"none\",\"typ\":\"JWT\"}".getBytes());
+
+        String payload = Base64.getUrlEncoder().withoutPadding().encodeToString(
+                String.format("{\"iss\":\"taskflow-app\",\"sub\":\"%s\",\"upn\":\"%s\",\"userId\":\"%s\",\"email\":\"%s\",\"name\":\"%s\",\"groups\":[\"access-token\",\"user\"],\"iat\":%d,\"exp\":%d}",
+                        user.getId(), user.getEmail(), user.getId(), user.getEmail(), user.getDisplayName(), now, exp).getBytes());
+
+        return header + "." + payload + ".";
     }
 
     public static String generateRefreshToken(UserResponse user) {
-        try {
-            JwtClaimsBuilder claims = Jwt.claims();
-            claims.issuer("taskflow-app");
-            claims.subject(user.getId());
-            claims.upn(user.getEmail());
-            claims.claim("userId", user.getId());
-            claims.claim("email", user.getEmail());
-            claims.claim("name", user.getDisplayName());
-            claims.groups(Set.of("refresh-token"));
-            claims.issuedAt(Instant.now());
-            claims.expiresAt(Instant.now().plus(Duration.ofDays(7)));
+        long now = Instant.now().getEpochSecond();
+        long exp = Instant.now().plus(Duration.ofDays(7)).getEpochSecond();
 
-            return claims.sign("none");
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to generate refresh token: " + e.getMessage(), e);
-        }
+        String header = Base64.getUrlEncoder().withoutPadding().encodeToString(
+                "{\"alg\":\"none\",\"typ\":\"JWT\"}".getBytes());
+
+        String payload = Base64.getUrlEncoder().withoutPadding().encodeToString(
+                String.format("{\"iss\":\"taskflow-app\",\"sub\":\"%s\",\"upn\":\"%s\",\"userId\":\"%s\",\"email\":\"%s\",\"name\":\"%s\",\"groups\":[\"refresh-token\"],\"iat\":%d,\"exp\":%d}",
+                        user.getId(), user.getEmail(), user.getId(), user.getEmail(), user.getDisplayName(), now, exp).getBytes());
+
+        return header + "." + payload + ".";
     }
 }
