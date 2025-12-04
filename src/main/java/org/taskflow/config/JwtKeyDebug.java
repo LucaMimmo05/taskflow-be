@@ -14,8 +14,8 @@ public class JwtKeyDebug {
         try {
             System.out.println(">>> [JWT DEBUG] Current path: " + Path.of("").toAbsolutePath());
 
-            Path privateKey = Path.of("META-INF/private.pem");
-            Path publicKey = Path.of("META-INF/public.pem");
+            Path privateKey = Path.of("keys/private.pem");
+            Path publicKey = Path.of("keys/public.pem");
 
             System.out.println(">>> [JWT DEBUG] PRIVATE exists: " + Files.exists(privateKey));
             System.out.println(">>> [JWT DEBUG] PUBLIC exists: " + Files.exists(publicKey));
