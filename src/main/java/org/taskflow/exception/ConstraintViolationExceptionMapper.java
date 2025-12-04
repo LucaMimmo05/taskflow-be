@@ -2,6 +2,7 @@ package org.taskflow.exception;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
@@ -34,8 +35,7 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
     private Map<String, String> mapViolation(ConstraintViolation<?> violation) {
         Map<String, String> error = new HashMap<>();
 
-        String fullPath = violation.getPropertyPath().toString();
-        String fieldName = extractFieldName(fullPath);
+        String fieldName = extractFieldName(violation);
 
         error.put("field", fieldName);
         error.put("message", violation.getMessage());
@@ -43,14 +43,28 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
         return error;
     }
 
-    private String extractFieldName(String fullPath) {
-        String[] parts = fullPath.split("\\.");
+    private String extractFieldName(ConstraintViolation<?> violation) {
+        // Iterate over the Path nodes and return the last non-null node name.
+        // This avoids exposing parameter/method/class prefixes like "register.userRequest.email".
+        String lastName = null;
+        for (Path.Node node : violation.getPropertyPath()) {
+            if (node.getName() != null && !node.getName().isEmpty()) {
+                lastName = node.getName();
+            }
+        }
 
-        if (parts.length >= 2) {
+        if (lastName != null) {
+            return lastName;
+        }
+
+        // Fallback to the full path string if node names are not available
+        String fullPath = violation.getPropertyPath().toString();
+        // Try a final attempt to extract after dots as a safety net
+        String[] parts = fullPath.split("\\.");
+        if (parts.length >= 1) {
             return parts[parts.length - 1];
         }
 
         return fullPath;
     }
 }
-
