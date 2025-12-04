@@ -14,6 +14,7 @@ import org.taskflow.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -207,28 +208,31 @@ public class TaskService {
         taskResponse.setPhaseId(task.getPhaseId());
 
         List<Label> labels = null;
-        if (task.getLabelIds() != null && !task.getLabelIds().isEmpty() && project.getLabels() != null) {
+        if (project != null && task.getLabelIds() != null && !task.getLabelIds().isEmpty() && project.getLabels() != null) {
             labels = task.getLabelIds().stream()
                     .map(labelId -> project.getLabels().stream()
                             .filter(label -> label.getId().equals(labelId))
                             .findFirst()
                             .orElse(null))
-                    .filter(label -> label != null)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
         }
         taskResponse.setLabels(labels);
 
-        List<AssigneeResponse> assigneeResponses = task.getAssignees().stream()
-                .map(assigneeId -> {
-                    AssigneeResponse assignee = new AssigneeResponse();
-                    assignee.setUserId(assigneeId.toString());
+        List<AssigneeResponse> assigneeResponses = new java.util.ArrayList<>();
+        if (task.getAssignees() != null && !task.getAssignees().isEmpty()) {
+            assigneeResponses = task.getAssignees().stream()
+                    .map(assigneeId -> {
+                        AssigneeResponse assignee = new AssigneeResponse();
+                        assignee.setUserId(assigneeId.toString());
 
-                    User user = userRepository.findById(assigneeId);
-                    assignee.setDisplayName(user != null ? user.getDisplayName() : "Unknown");
+                        User user = userRepository.findById(assigneeId);
+                        assignee.setDisplayName(user != null ? user.getDisplayName() : "Unknown");
 
-                    return assignee;
-                })
-                .collect(Collectors.toList());
+                        return assignee;
+                    })
+                    .collect(Collectors.toList());
+        }
 
         taskResponse.setAssignees(assigneeResponses);
         taskResponse.setCreatedBy(task.getCreatedBy().toString());
