@@ -30,15 +30,11 @@ public class TaskSchedulerService {
      */
     @Scheduled(every = "1h")
     void checkDueTasks() {
-        System.out.println("=== TaskSchedulerService: Controllo task in scadenza ===");
-
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime in24Hours = now.plusHours(24);
 
         // Recupera tutte le task che scadono nelle prossime 24 ore
         List<Task> tasks = taskRepository.findTasksDueSoon(now, in24Hours);
-
-        System.out.println("Task in scadenza trovate: " + tasks.size());
 
         for (Task task : tasks) {
             if (task.getAssignees() != null && !task.getAssignees().isEmpty()) {
@@ -57,14 +53,10 @@ public class TaskSchedulerService {
                             task.getId(),
                             "task"
                         );
-
-                        System.out.println("Notifica inviata a " + assignee.getDisplayName() + " per task: " + task.getTitle());
                     }
                 }
             }
         }
-
-        System.out.println("=== TaskSchedulerService: Controllo completato ===");
     }
 }
 

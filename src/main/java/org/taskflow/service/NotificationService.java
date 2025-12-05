@@ -32,12 +32,6 @@ public class NotificationService {
      */
     public void createNotification(ObjectId recipientId, ObjectId senderId, String type,
                                    String message, ObjectId entityId, String entityType) {
-        System.out.println("=== NotificationService.createNotification CHIAMATO ===");
-        System.out.println("recipientId: " + recipientId);
-        System.out.println("senderId: " + senderId);
-        System.out.println("type: " + type);
-        System.out.println("message: " + message);
-
         if (recipientId == null) {
             throw new BadRequestException("Recipient ID cannot be null");
         }
@@ -53,7 +47,6 @@ public class NotificationService {
 
         // Non inviare notifica se il sender è uguale al recipient
         if (recipientId.equals(senderId)) {
-            System.out.println("Sender uguale a recipient - SKIP");
             return;
         }
 
@@ -61,30 +54,20 @@ public class NotificationService {
             recipientId, senderId, type, message, entityId, entityType
         );
 
-        System.out.println("Chiamata al repository...");
         notificationRepository.createNotification(notification);
-        System.out.println("=== NotificationService.createNotification COMPLETATO ===");
     }
 
     /**
      * Recupera tutte le notifiche non lette + le ultime 10 lette per l'utente loggato
      */
     public List<NotificationResponse> getNotifications(ObjectId userId) {
-        System.out.println("=== NotificationService.getNotifications CHIAMATO ===");
-        System.out.println("userId: " + userId);
-
         List<Notification> unreadNotifications = notificationRepository.findUnreadByRecipientId(userId);
-        System.out.println("Unread notifications: " + unreadNotifications.size());
-
         List<Notification> readNotifications = notificationRepository.findReadByRecipientId(userId, 10);
-        System.out.println("Read notifications: " + readNotifications.size());
 
         List<Notification> allNotifications = new ArrayList<>();
         allNotifications.addAll(unreadNotifications);
         allNotifications.addAll(readNotifications);
 
-        System.out.println("Total notifications: " + allNotifications.size());
-        System.out.println("=== NotificationService.getNotifications COMPLETATO ===");
 
         return allNotifications.stream()
                 .map(this::toResponse)

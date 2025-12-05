@@ -12,15 +12,7 @@ import java.util.List;
 public class NotificationRepository implements PanacheMongoRepository<Notification> {
 
     public void createNotification(Notification notification) {
-        System.out.println("=== NotificationRepository.createNotification ===");
-        System.out.println("Notification before persist: " + notification);
-        System.out.println("ID before persist: " + notification.getId());
-
-        // Usa persist diretto
         persist(notification);
-
-        System.out.println("ID after persist: " + notification.getId());
-        System.out.println("Notification persisted successfully");
     }
 
     public Notification findByNotificationId(ObjectId notificationId) {
@@ -28,10 +20,7 @@ public class NotificationRepository implements PanacheMongoRepository<Notificati
     }
 
     public List<Notification> findUnreadByRecipientId(ObjectId recipientId) {
-        System.out.println("=== findUnreadByRecipientId for recipientId: " + recipientId);
-        List<Notification> result = list("recipientId = ?1 and isRead = ?2", Sort.descending("createdAt"), recipientId, false);
-        System.out.println("Found " + result.size() + " unread notifications");
-        return result;
+        return list("recipientId = ?1 and isRead = ?2", Sort.descending("createdAt"), recipientId, false);
     }
 
     public List<Notification> findReadByRecipientId(ObjectId recipientId, int limit) {
