@@ -29,6 +29,9 @@ public class TaskService {
     @Inject
     UserRepository userRepository;
 
+    @Inject
+    NotificationService notificationService;
+
 
     public List<TaskResponse> getTasksByProjectId(ObjectId projectId) {
         var tasks = taskRepository.getTasksByProjectId(projectId);
@@ -95,6 +98,41 @@ public class TaskService {
         task.setUpdatedAt(LocalDateTime.now());
 
         taskRepository.createTask(task);
+
+        User creator = userRepository.findById(userId);
+        String creatorName = creator != null ? creator.getDisplayName() : "Someone";
+
+        // Notifica tutti i collaboratori del progetto della creazione della task
+        List<ObjectId> collaboratorIds = project.getCollaborators().stream()
+                .map(Collaborator::getUserId)
+                .filter(collaboratorId -> !collaboratorId.equals(userId)) // Escludi il creatore
+                .toList();
+
+        for (ObjectId collaboratorId : collaboratorIds) {
+            notificationService.createNotification(
+                collaboratorId,
+                userId,
+                "taskCreated",
+                creatorName + " ha creato una nuova task nel progetto: " + task.getTitle(),
+                task.getId(),
+                "task"
+            );
+        }
+
+        // Crea notifiche aggiuntive per gli assignees
+        if (assigneeIds != null && !assigneeIds.isEmpty()) {
+            for (ObjectId assigneeId : assigneeIds) {
+                notificationService.createNotification(
+                    assigneeId,
+                    userId,
+                    "taskAssigned",
+                    creatorName + " ti ha assegnato il task: " + task.getTitle(),
+                    task.getId(),
+                    "task"
+                );
+            }
+        }
+
         return toResponse(task);
     }
 
@@ -144,6 +182,8 @@ public class TaskService {
         }
 
         if (taskRequest.getAssignees() != null) {
+            List<ObjectId> oldAssignees = task.getAssignees() != null ? task.getAssignees() : List.of();
+
             if (!taskRequest.getAssignees().isEmpty()) {
                 List<ObjectId> collaboratorIds = project.getCollaborators().stream()
                         .map(Collaborator::getUserId)
@@ -158,6 +198,23 @@ public class TaskService {
                         })
                         .collect(Collectors.toList());
                 task.setAssignees(assigneeIds);
+
+                // Notifica i nuovi assignees
+                User updater = userRepository.findById(userId);
+                String updaterName = updater != null ? updater.getDisplayName() : "Someone";
+
+                for (ObjectId assigneeId : assigneeIds) {
+                    if (!oldAssignees.contains(assigneeId)) {
+                        notificationService.createNotification(
+                            assigneeId,
+                            userId,
+                            "taskAssigned",
+                            updaterName + " ti ha assegnato il task: " + task.getTitle(),
+                            task.getId(),
+                            "task"
+                        );
+                    }
+                }
             } else {
                 task.setAssignees(List.of());
             }
@@ -192,6 +249,9 @@ public class TaskService {
         if (!isCollaborator) {
             throw new BadRequestException("User is not a collaborator of this project");
         }
+
+        // Elimina le notifiche associate al task
+        notificationService.deleteNotificationsByEntityId(taskId);
 
         taskRepository.deleteTask(taskId);
     }
