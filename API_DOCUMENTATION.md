@@ -720,6 +720,175 @@ DELETE /api/project/507f1f77bcf86cd799439011/collaborators
 
 ---
 
+## Notification API
+
+### 16. Get User Notifications
+
+**Endpoint:** `GET /api/notifications`
+
+**Authentication:** Required
+
+**Description:** Returns all unread notifications plus the last 10 read notifications for the current user, sorted by creation date (newest first).
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": "507f1f77bcf86cd799439030",
+    "recipientId": "507f1f77bcf86cd799439012",
+    "senderId": "507f1f77bcf86cd799439011",
+    "senderName": "John Doe",
+    "type": "taskAssigned",
+    "message": "John Doe ti ha assegnato il task: Fix login bug",
+    "entityId": "507f1f77bcf86cd799439020",
+    "entityType": "task",
+    "isRead": false,
+    "createdAt": "2025-11-16T14:30:00"
+  },
+  {
+    "id": "507f1f77bcf86cd799439031",
+    "recipientId": "507f1f77bcf86cd799439012",
+    "senderId": "507f1f77bcf86cd799439011",
+    "senderName": "John Doe",
+    "type": "projectInvite",
+    "message": "John Doe ti ha aggiunto al progetto: TaskFlow App",
+    "entityId": "507f1f77bcf86cd799439010",
+    "entityType": "project",
+    "isRead": false,
+    "createdAt": "2025-11-16T12:00:00"
+  },
+  {
+    "id": "507f1f77bcf86cd799439032",
+    "recipientId": "507f1f77bcf86cd799439012",
+    "senderId": "507f1f77bcf86cd799439011",
+    "senderName": "John Doe",
+    "type": "taskAssigned",
+    "message": "John Doe ti ha assegnato il task: Update documentation",
+    "entityId": "507f1f77bcf86cd799439021",
+    "entityType": "task",
+    "isRead": true,
+    "createdAt": "2025-11-15T10:00:00"
+  }
+]
+```
+
+**Notification Types:**
+- `taskAssigned`: When a user is assigned to a task
+- `taskCreated`: When a new task is created in a project (notifies all collaborators except the creator)
+- `taskDueSoon`: When a task is due within 24 hours (notifies all assignees, checked every hour)
+- `projectInvite`: When a user is added as a collaborator to a project
+
+**Entity Types:**
+- `task`: Notification related to a task
+- `project`: Notification related to a project
+
+**Errors:**
+- `401 Unauthorized`: Invalid or missing token
+
+---
+
+### 17. Get Unread Notifications Count
+
+**Endpoint:** `GET /api/notifications/count`
+
+**Authentication:** Required
+
+**Description:** Returns the count of unread notifications for the current user.
+
+**Response:** `200 OK`
+```json
+{
+  "unreadCount": 5
+}
+```
+
+**Errors:**
+- `401 Unauthorized`: Invalid or missing token
+
+---
+
+### 18. Mark Notification as Read
+
+**Endpoint:** `PUT /api/notifications/{id}/read`
+
+**Authentication:** Required
+
+**Description:** Marks a specific notification as read. Users can only mark their own notifications as read.
+
+**Path Parameters:**
+- `id`: Notification ID (ObjectId string)
+
+**Response:** `200 OK`
+```json
+{
+  "id": "507f1f77bcf86cd799439030",
+  "recipientId": "507f1f77bcf86cd799439012",
+  "senderId": "507f1f77bcf86cd799439011",
+  "senderName": "John Doe",
+  "type": "taskAssigned",
+  "message": "John Doe ti ha assegnato il task: Fix login bug",
+  "entityId": "507f1f77bcf86cd799439020",
+  "entityType": "task",
+  "isRead": true,
+  "createdAt": "2025-11-16T14:30:00"
+}
+```
+
+**Errors:**
+- `401 Unauthorized`: Invalid or missing token
+- `403 Forbidden`: User is not authorized to mark this notification as read
+- `404 Not Found`: Notification not found
+
+---
+
+### 19. Mark All Notifications as Read
+
+**Endpoint:** `PUT /api/notifications/read-all`
+
+**Authentication:** Required
+
+**Description:** Marks all unread notifications for the current user as read.
+
+**Response:** `200 OK`
+```json
+{
+  "message": "All notifications marked as read"
+}
+```
+
+**Errors:**
+- `401 Unauthorized`: Invalid or missing token
+
+---
+
+### Automatic Notifications
+
+Notifications are automatically created in the following scenarios:
+
+1. **Task Creation**: When a new task is created in a project
+   - Recipients: All project collaborators (except the creator)
+   - Type: `taskCreated`
+   - Entity: Task ID
+   - Message: "{Creator} ha creato una nuova task nel progetto: {Task Title}"
+
+2. **Task Assignment**: When a user is assigned to a task (via create or update)
+   - Recipients: All newly assigned users
+   - Type: `taskAssigned`
+   - Entity: Task ID
+   - Message: "{Assigner} ti ha assegnato il task: {Task Title}"
+
+3. **Task Due Soon**: When a task is due within 24 hours (checked every hour by scheduler)
+   - Recipients: All task assignees
+   - Type: `taskDueSoon`
+   - Entity: Task ID
+   - Message: "La task \"{Task Title}\" scadrà tra meno di 24 ore!"
+   
+4. **Task Deletion**: When a task is deleted, all related notifications are automatically removed
+
+**Note:** Users do not receive notifications for actions they perform themselves (e.g., self-assigning a task).
+
+---
+
 ## Health Check API
 
 ### 15. Check MongoDB Connection
