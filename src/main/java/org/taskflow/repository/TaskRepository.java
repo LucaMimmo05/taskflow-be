@@ -33,4 +33,8 @@ public class TaskRepository implements PanacheMongoRepository<Task> {
     public void deleteTasksByProjectId(ObjectId projectId) {
         delete("projectId", projectId);
     }
+
+    public List<Task> findTasksDueSoon(java.time.LocalDateTime now, java.time.LocalDateTime in24Hours) {
+        return find("dueDate >= ?1 and dueDate <= ?2", now, in24Hours).list();
+    }
 }
