@@ -31,6 +31,9 @@ public class ProjectService {
     @Inject
     UserRepository userRepository;
 
+    @Inject
+    NotificationService notificationService;
+
     public ProjectResponse findById(ObjectId id) {
         Project project = projectRepository.getProjectById(id);
         if (project == null) {
@@ -166,6 +169,19 @@ public class ProjectService {
         existing.setCollaborators(collaborators);
         existing.setUpdatedAt(LocalDateTime.now());
         projectRepository.updateProject(existing);
+
+        // Crea notifica per il nuovo collaboratore
+        User creator = userRepository.findById(userId);
+        String creatorName = creator != null ? creator.getDisplayName() : "Someone";
+
+        notificationService.createNotification(
+            newCollaborator.getUserId(),
+            userId,
+            "projectInvite",
+            creatorName + " ti ha aggiunto al progetto: " + existing.getTitle(),
+            existing.getId(),
+            "project"
+        );
 
         return toResponse(existing);
     }
