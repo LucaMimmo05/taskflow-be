@@ -102,10 +102,9 @@ public class TaskService {
         User creator = userRepository.findById(userId);
         String creatorName = creator != null ? creator.getDisplayName() : "Someone";
 
-        // Notifica tutti i collaboratori del progetto della creazione della task
         List<ObjectId> collaboratorIds = project.getCollaborators().stream()
                 .map(Collaborator::getUserId)
-                .filter(collaboratorId -> !collaboratorId.equals(userId)) // Escludi il creatore
+                .filter(collaboratorId -> !collaboratorId.equals(userId))
                 .toList();
 
         for (ObjectId collaboratorId : collaboratorIds) {
@@ -119,7 +118,6 @@ public class TaskService {
             );
         }
 
-        // Crea notifiche aggiuntive per gli assignees
         if (assigneeIds != null && !assigneeIds.isEmpty()) {
             for (ObjectId assigneeId : assigneeIds) {
                 notificationService.createNotification(
@@ -199,7 +197,6 @@ public class TaskService {
                         .collect(Collectors.toList());
                 task.setAssignees(assigneeIds);
 
-                // Notifica i nuovi assignees
                 User updater = userRepository.findById(userId);
                 String updaterName = updater != null ? updater.getDisplayName() : "Someone";
 
@@ -250,7 +247,6 @@ public class TaskService {
             throw new BadRequestException("User is not a collaborator of this project");
         }
 
-        // Elimina le notifiche associate al task
         notificationService.deleteNotificationsByEntityId(taskId);
 
         taskRepository.deleteTask(taskId);

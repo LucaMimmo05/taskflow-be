@@ -24,30 +24,23 @@ public class TaskSchedulerService {
     @Inject
     NotificationService notificationService;
 
-    /**
-     * Controlla le task in scadenza ogni ora
-     * Notifica gli assignees delle task che scadono nelle prossime 24 ore
-     */
     @Scheduled(every = "1h")
     void checkDueTasks() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime in24Hours = now.plusHours(24);
 
-        // Recupera tutte le task che scadono nelle prossime 24 ore
         List<Task> tasks = taskRepository.findTasksDueSoon(now, in24Hours);
 
         for (Task task : tasks) {
             if (task.getAssignees() != null && !task.getAssignees().isEmpty()) {
-                // Notifica tutti gli assignees
                 for (ObjectId assigneeId : task.getAssignees()) {
                     User assignee = userRepository.findById(assigneeId);
                     if (assignee != null) {
                         String message = "La task \"" + task.getTitle() + "\" scadrà tra meno di 24 ore!";
 
-                        // Usa un ID di sistema per le notifiche automatiche
                         notificationService.createNotification(
                             assigneeId,
-                            task.getCreatedBy(), // Il creatore come sender
+                            task.getCreatedBy(),
                             "taskDueSoon",
                             message,
                             task.getId(),
