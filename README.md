@@ -1,90 +1,98 @@
-# taskflow-be
+# Taskflow Backend
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+REST API server for the Taskflow application, built with **Quarkus** and **MongoDB**.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Features
 
-## Running the application in dev mode
+- User registration and login with JWT authentication
+- Project management with collaborators and phases
+- Task CRUD operations and assignment
+- Notifications system
 
-You can run your application in dev mode that enables live coding using:
+## Requirements
 
-```shell script
+- Java 17+
+- Maven 3.8+
+- MongoDB instance (local or remote)
+
+## Configuration
+
+Application settings are in `src/main/resources/application.properties`.
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MONGODB_URI` | MongoDB connection string | — |
+| `MONGODB_DATABASE` | Database name | — |
+| `PORT` | HTTP server port | `8080` |
+
+### JWT Configuration
+
+JWT keys are stored in `src/main/resources/keys/`:
+- `private.pem` — used for signing tokens
+- `public.pem` — used for verifying tokens
+
+> **Warning**: Do not commit production private keys to the repository.
+
+Related properties:
+```properties
+# Verification
+mp.jwt.verify.issuer=taskflow-app
+mp.jwt.verify.publickey.location=keys/public.pem
+mp.jwt.verify.publickey.algorithm=RS256
+
+# Signing
+smallrye.jwt.sign.key.location=keys/private.pem
+smallrye.jwt.sign.key-format=pem
+```
+
+## Running the Application
+
+### Development Mode
+
+```bash
 ./mvnw quarkus:dev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+### Production Build
 
-## Packaging and running the application
-
-The application can be packaged using:
-
-```shell script
+```bash
 ./mvnw package
+java -jar target/taskflow-be-1.0-SNAPSHOT-runner.jar
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+For an uber-jar (single fat JAR):
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
+```bash
 ./mvnw package -Dquarkus.package.jar.type=uber-jar
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+## API Documentation
 
-## Creating a native executable
+See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for detailed endpoint documentation with request/response examples.
 
-You can create a native executable using:
+## Project Structure
 
-```shell script
-./mvnw package -Dnative
+```
+src/main/java/org/taskflow/
+├── config/         # Application configuration
+├── controller/     # REST endpoints
+├── dto/            # Request/Response objects
+├── exception/      # Exception handlers
+├── model/          # Domain entities
+├── repository/     # Data access layer
+└── service/        # Business logic
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
+## Contributing
 
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
+Follow the existing commit message style:
+- `Add [feature] for [purpose]`
+- `Enhance [component] with [improvement]`
+- `Update [file] with [changes]`
 
-You can then execute your native executable with: `./target/taskflow-be-1.0-SNAPSHOT-runner`
+## License
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
+MIT
 
-## Related Guides
-
-- REST ([guide](https://quarkus.io/guides/rest)): A Jakarta REST implementation utilizing build time processing and
-  Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on
-  it.
-- Qute Web ([guide](https://quarkiverse.github.io/quarkiverse-docs/quarkus-qute-web/dev/index.html)): Serves Qute
-  templates directly over HTTP.
-- REST resources for MongoDB with Panache ([guide](https://quarkus.io/guides/rest-data-panache)): Generate Jakarta REST
-  resources for your MongoDB entities and repositories
-- MongoDB with Panache ([guide](https://quarkus.io/guides/mongodb-panache)): Simplify your persistence code for MongoDB
-  via the active record or the repository pattern
-- REST Qute ([guide](https://quarkus.io/guides/qute-reference#rest_integration)): Qute integration for Quarkus REST.
-  This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
-
-## Provided Code
-
-### Qute Web
-
-Qute templates like `some-page.html` served via HTTP automatically by Quarkus from the `src/main/resource/templates/pub`
-directory. No controllers needed. Once the quarkus app is started visit the generated page
-at http://localhost:8080/some-page?name=World
-
-[Related guide section...](https://docs.quarkiverse.io/quarkus-qute-web/dev/index.html)
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
-
-### REST Qute
-
-Create your web page using Quarkus REST and Qute
-
-[Related guide section...](https://quarkus.io/guides/qute#type-safe-templates)
